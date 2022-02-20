@@ -1,4 +1,4 @@
-pub mod invert_index {
+pub mod inverted_index {
     pub struct Token {
         id: u64,
         body: String
@@ -24,7 +24,39 @@ pub mod invert_index {
     }
 }
 
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
+use std::io::prelude::*;
+
 fn main() {
-    let _token = invert_index::build_token(0, "body".to_string());
-    let _document = invert_index::build_document(0, "body".to_string());
+    let mut _inverted_index: HashMap::<String,Vec<u64>> = HashMap::new();
+    let file = File::open("./resource/sample.txt").expect("file not found");
+
+    let mut document_id: u64 = 0;
+    let reader = BufReader::new(file);
+    for line in reader.lines() {
+        let tokens = divide_bigram(line.unwrap_or("".to_string()));
+        for token in tokens {
+            _inverted_index.entry(token)
+            .and_modify(|vec| vec.push(document_id))
+            .or_insert([document_id].to_vec());
+        }
+        document_id += 1;
+    }
+    println!("{:?}", _inverted_index);
+}
+
+pub fn divide_bigram(str: String) -> Vec<String> {
+    let mut ret: Vec<String> = Vec::new();
+    let mut prev:char = '-';
+    for char in str.chars() {
+        if char != '-' {
+            let mut prev_str = prev.to_string();
+            prev_str.push_str(&char.to_string());
+            ret.push(prev_str);
+        }
+        prev = char;
+    }
+    return ret;
 }
