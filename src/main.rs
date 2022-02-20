@@ -27,7 +27,6 @@ pub mod inverted_index {
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::io::prelude::*;
 
 fn main() {
     let mut _inverted_index: HashMap::<String,Vec<u64>> = HashMap::new();
@@ -49,14 +48,11 @@ fn main() {
 
 pub fn divide_bigram(str: String) -> Vec<String> {
     let mut ret: Vec<String> = Vec::new();
-    let mut prev:char = '-';
-    for char in str.chars() {
-        if char != '-' {
-            let mut prev_str = prev.to_string();
-            prev_str.push_str(&char.to_string());
-            ret.push(prev_str);
-        }
-        prev = char;
+    let chars: Vec<char> = str.chars().collect();
+    for i in 0..chars.len()-1 {
+        let token_vec: Vec<String> = chars[i..i+2].iter().map(|c| c.to_string()).collect();
+        let token = token_vec.join("");
+        ret.push(token);
     }
     return ret;
 }
