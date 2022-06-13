@@ -10,7 +10,7 @@ struct InvertedIndex {
 }
 
 fn main() -> Result<()> {
-    let conn = Connection::open_in_memory()?;
+    let conn: Connection = Connection::open_in_memory()?;
     conn.execute(
     "CREATE TABLE IF NOT EXISTS inverted_index (
             token           TEXT PRIMARY KEY,
@@ -22,12 +22,12 @@ fn main() -> Result<()> {
     conn.execute("begin transaction a", [])?;
 
     let mut _inverted_index: HashMap::<String,Vec<u64>> = HashMap::new();
-    let file = File::open("./resource/sample.txt").expect("file not found");
+    let file: File = File::open("./resource/sample.txt").expect("file not found");
 
     let mut document_id: u64 = 0;
-    let reader = BufReader::new(file);
+    let reader: BufReader<File> = BufReader::new(file);
     for line in reader.lines() {
-        let tokens = divide_bigram(line.unwrap_or("".to_string()));
+        let tokens: Vec<String> = divide_bigram(line.unwrap_or("".to_string()));
         for token in tokens {
             _inverted_index.entry(token)
             .and_modify(|vec| vec.push(document_id))
@@ -48,18 +48,14 @@ fn main() -> Result<()> {
 
     conn.execute("commit transaction a", [])?;
 
-    let mut stmt = conn.prepare("SELECT * FROM inverted_index")?;
-    let index_iter = stmt.query_map([], |row| {
-        Ok(InvertedIndex {
-            token: row.get(0)?,
-            document_ids: row.get(1)?,
-        })
-    })?;
+    // _search("SN".to_string(), conn);
 
-    for index in index_iter {
-        println!("Found index {:?}", index.unwrap());
-    }
-
+    /* 
+    let mut stmt = conn.prepare("SELECT * FROM inverted_index WHERE token = ?1").expect("msg");
+    let mut rows = stmt.query(&["SN"]);
+    let mut names = Vec::new();
+    rows.map(|r| r.get(0)).collect();
+    */
     Ok(())
 }
 
@@ -72,4 +68,10 @@ pub fn divide_bigram(str: String) -> Vec<String> {
         ret.push(token);
     }
     return ret;
+}
+
+pub fn _search(_query: String, conn: Connection) {
+    let mut stmt = conn.prepare("SELECT * FROM inverted_index WHERE token = ?1").expect("msg");
+    let a = stmt.execute(params!["SN"]);
+    println!("{:?}", a);
 }
